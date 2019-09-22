@@ -9,7 +9,7 @@ let package = Package(
         ],
     dependencies: [
         .package(
-            url: "https://github.com/PureSwift/Silica.git",
+            url: "https://github.com/Anard/Silica.git",
             .branch("master")
         ),
         .package(
