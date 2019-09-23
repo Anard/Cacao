@@ -1,4 +1,4 @@
-// swift-tools-version:4.1
+// swift-tools-version:5.0
 import PackageDescription
 
 let package = Package(
@@ -9,15 +9,15 @@ let package = Package(
         ],
     dependencies: [
         .package(
-            url: "https://github.com/Anard/Silica.git",
+            url: "https://github.com/Anard/Silica",
             .branch("master")
         ),
         .package(
-            url: "https://github.com/PureSwift/Cairo.git",
+            url: "../Cairo",
             .branch("master")
         ),
         .package(
-            url: "https://github.com/PureSwift/SDL.git",
+            url: "../SDL",
             .branch("master")
         )
     ],
