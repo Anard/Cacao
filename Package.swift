@@ -13,11 +13,11 @@ let package = Package(
             .branch("master")
         ),
         .package(
-            url: "../Cairo",
+            url: "https://github.com/PureSwift/Cairo",
             .branch("master")
         ),
         .package(
-            url: "../SDL",
+            url: "https://github.com/PureSwift/SDL",
             .branch("master")
         )
     ],
