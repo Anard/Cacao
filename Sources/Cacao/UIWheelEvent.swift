@@ -9,7 +9,22 @@ import Foundation
 
 public final class UIWheelEvent: UIEvent {
     
-    public override var type: UIEventType { return .scrollWheel }
+    public override var type: UIEventType { return .wheel }
     
-    public var wheelVelocity: CGFloat = 0
+    public let translation: CGSize
+    
+    internal init(timestamp: TimeInterval, translation: CGSize) {
+        
+        self.translation = translation
+        
+        super.init(timestamp: timestamp)
+    }
+}
+
+extension UIWheelEvent: UIResponderEvent {
+    
+    func sendEvent(to responder: UIResponder) {
+        
+        responder.wheelChanged(with: self)
+    }
 }

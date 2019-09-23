@@ -6,19 +6,18 @@
 //  Copyright © 2016 PureSwift. All rights reserved.
 //
 
-#if os(iOS)
-    
+#if os(iOS) || os(tvOS)
+
 import UIKit
 
-UIApplicationMain(0, nil, nil, NSStringFromClass(AppDelegate.self))
-    
+let _ = UIApplicationMain(0, nil, nil, NSStringFromClass(AppDelegate.self))
+
 #else
-    
+
 import Cacao
 
 var options = CacaoOptions()
 options.windowName = "CacaoDemo"
-
 UIApplicationMain(delegate: AppDelegate.shared, options: options)
     
 #endif

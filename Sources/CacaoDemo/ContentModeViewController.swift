@@ -14,8 +14,9 @@
 
 import Foundation
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
     import UIKit
+    import CoreGraphics
 #else
     import Cacao
     import Silica
@@ -39,7 +40,7 @@ final class ContentModeViewController: UIViewController {
     
     override func loadView() {
         
-        let logoView = SwiftLogoView(frame: CGRect()) // since we dont use autoresizing, initial size doesnt matter
+        let logoView = SwiftLogoView(frame: .zero) // since we dont use autoresizing, initial size doesnt matter
         
         self.view = logoView
         
@@ -51,16 +52,15 @@ final class ContentModeViewController: UIViewController {
         
         label.text = "\(modes[0])"
         
-        label.textColor = UIColor.white
+        label.textColor = .white
         
         let button = UIButton()
         
-        button.isOpaque = true
-        
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         button.addTarget(self, action: #selector(_changeMode), for: .touchUpInside)
         #else
-        let selector = Selector(name: "changeMode", action: { (_, sender, _) in self.changeMode(sender as! UIButton) })
+        let selector = Selector(name: "changeMode", action: { (_, sender, _) in self.changeMode(sender as! UIButton)
+        })
         button.addTarget(self, action: selector, for: .touchUpInside)
         #endif
         
@@ -98,7 +98,7 @@ final class ContentModeViewController: UIViewController {
     
     // MARK: - Actions
     
-    #if os(iOS)
+    #if os(iOS) || os(tvOS)
     @IBAction func _changeMode(_ sender: UIButton) { changeMode(sender) }
     #endif
     

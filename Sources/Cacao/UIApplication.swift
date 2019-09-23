@@ -48,16 +48,12 @@ public final class UIApplication: UIResponder {
     
     public static var shared: UIApplication { return _UIApp }
     
-    private override init() { fatalError() }
-    
     fileprivate init(delegate: UIApplicationDelegate, options: CacaoOptions) {
         
         assert(_UIApp == nil, "\(UIApplication.self) is a singleton and should only be initialized once.")
         
         self.options = options
         self.delegate = delegate
-        
-        super.init()
     }
     
     // MARK: - Getting the App Delegate
@@ -137,6 +133,11 @@ public final class UIApplication: UIResponder {
         self.isDone = true
     }
     
+    internal func lowMemory() {
+        
+        
+    }
+    
     private func keyWindow(for screen: UIScreen) -> UIWindow? {
         
         return screen.keyWindow
@@ -165,6 +166,21 @@ public final class UIApplication: UIResponder {
     public override func wheelChanged(with event: UIWheelEvent) {
         
         super.wheelChanged(with: event)
+    }
+    
+    internal func sendButtonEvent(with pressInfo: UIPressInfo) {
+        
+        
+    }
+    
+    internal func handlePhysicalButtonEvent(_ event: UIPhysicalKeyboardEvent) {
+        
+        
+    }
+    
+    public override func becomeFirstResponder() -> Bool {
+        
+        return keyWindow?.becomeFirstResponder() ?? false
     }
 }
 

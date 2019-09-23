@@ -8,8 +8,9 @@
 
 import Foundation
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
     import UIKit
+    import CoreGraphics
 #else
     import Cacao
     import Silica
@@ -17,7 +18,11 @@ import Foundation
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
     
-    static let shared = AppDelegate()
+    #if os(iOS)
+    static var shared: AppDelegate { return UIApplication.shared.delegate as! AppDelegate }
+    #else
+    static let shared: AppDelegate = AppDelegate()
+    #endif
     
     var window: UIWindow?
     
@@ -26,13 +31,15 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         print("Device: \(UIDevice.current.name)")
         print("Model: \(UIDevice.current.model)")
         print("System: \(UIDevice.current.systemName) \(UIDevice.current.systemVersion)")
+        #if !os(tvOS)
         print("Battery: \(UIDevice.current.batteryLevel) (\(UIDevice.current.batteryState))")
-        print("FPS: \(UIScreen.main.maximumFramesPerSecond)")
+        #endif
+        if #available(iOS 10.3, *) {
+            print("FPS: \(UIScreen.main.maximumFramesPerSecond)")
+        }
         
         self.window = UIWindow(frame: UIScreen.main.bounds)
-        
         self.window?.rootViewController = TableViewController()
-        
         self.window?.makeKeyAndVisible()
         
         return true

@@ -46,13 +46,13 @@ public class UIEvent {
     ///
     /// The UIEventType constant returned by this property indicates the general type of this event—for example,
     /// whether it is a touch or motion event.
-    public var type: UIEventType { return  .touches }
+    public var type: UIEventType { fatalError("Should override for \(self)") }
     
     /// Returns the subtype of the event.
     ///
     /// The `UIEventSubtype` constant returned by this property indicates the subtype of the event
     /// in relation to the general type, which is returned from the type property.
-    public internal(set) var subtype: UIEventSubtype = .none
+    public var subtype: UIEventSubtype { return .none }
     
     // MARK: - Initialization
     
@@ -103,7 +103,7 @@ public enum UIEventType: Int {
     case physicalKeyboard = 0x4
     case move = 0x5
     
-    case scrollWheel = 0x7
+    case wheel = 0x7
     case gameController = 0x8
     case drag = 0x9
 }
@@ -124,4 +124,11 @@ public enum UIEventSubtype: Int {
     case remoteControlEndSeekingForward
     
     
+}
+
+// MARK: - Internal
+
+internal protocol UIResponderEvent: class {
+    
+    func sendEvent(to responder: UIResponder)
 }

@@ -352,17 +352,63 @@ open class UIView: UIResponder {
     @inline(__always)
     private func addSubview(_ view: UIView, _ body: (inout [UIView], UIView) -> ()) {
         
+        let oldWindow = view.window
+        let newWindow = self.window
+        
+        // remove from previous superview
         if view.superview !== self {
             view.removeFromSuperview()
         }
         
+        // store subview in array
         body(&subviews, view)
         
+        view.willMove(toSuperview: self)
+        
+        // set super view weak reference
         view.superview = self
         
+        // inform view of change
+        if oldWindow?.screen !== newWindow?.screen {
+            didMoveToScreen()
+        }
+        view.didMoveToSuperview()
         didAddSubview(view)
         
+        // force redraw
         setNeedsDisplay()
+    }
+    
+    private func willMove(fromWindow: UIWindow?, toWindow: UIWindow?) {
+        
+        guard fromWindow !== toWindow
+            else { return }
+        
+        if isFirstResponder {
+            let _ = resignFirstResponder()
+        }
+        
+        willMove(toWindow: toWindow)
+        
+        subviews.forEach { $0.willMove(fromWindow: fromWindow, toWindow: toWindow) }
+        
+        viewController?.beginAppearanceTransition(toWindow != nil, animated: false)
+    }
+    
+    private func didMove(fromWindow: UIWindow?, toWindow: UIWindow?) {
+        
+        guard fromWindow !== toWindow
+            else { return }
+        
+        
+    }
+    
+    private func didMoveToScreen() {
+        
+        //self.contentScaleFactor = self.window.screen.scale
+        self.setNeedsDisplay()
+        
+        self.subviews.forEach { $0.didMoveToScreen() }
     }
     
     /// Moves the specified subview so that it appears on top of its siblings.
@@ -626,6 +672,25 @@ open class UIView: UIResponder {
     
     open func draw(_ rect: CGRect) { /* implemented by subclasses */ }
     
+    /// The scale factor applied to the view.
+    ///
+    /// The scale factor determines how content in the view is mapped from the logical coordinate space
+    /// (measured in points) to the device coordinate space (measured in pixels).
+    /// This value is typically either 1.0 or 2.0. Higher scale factors indicate that each point in
+    /// the view is represented by more than one pixel in the underlying layer.
+    /// For example, if the scale factor is 2.0 and the view frame size is 50 x 50 points,
+    /// the size of the bitmap used to present that content is 100 x 100 pixels.
+    ///
+    /// The default value for this property is the scale factor associated with the screen currently displaying the view.
+    ///
+    /// In general, you should not need to modify the value in this property.
+    /// However, if your application draws using OpenGL ES, you may want to change
+    /// the scale factor to trade image quality for rendering performance.
+    public final var contentScaleFactor: CGFloat {
+        
+        return self.window?.screen.scale ?? UIScreen.main.scale
+    }
+    
     /// The backing rendering node / texture.
     ///
     /// Cacao's equivalent of `UIView.layer` / `CALayer`.
@@ -635,7 +700,7 @@ open class UIView: UIResponder {
     /// (e.g. video streaming, SDL game) instead of the CoreGraphics drawing API.
     ///
     /// - Warning: Do not hold a reference to this object as it can be recreated as needed for rendering.
-    public private(set) var texture: Texture?
+    public private(set) var texture: SDLTexture?
     
     internal var shouldRender: Bool {
         return isHidden == false
@@ -644,7 +709,7 @@ open class UIView: UIResponder {
             && bounds.size.height >= 1.0 // must be at least 1x1
     }
     
-    internal final func render(on screen: UIScreen, in rect: SDL_Rect) {
+    internal final func render(on screen: UIScreen, in rect: SDL_Rect) throws {
         
         guard shouldRender
             else { return }
@@ -653,33 +718,34 @@ open class UIView: UIResponder {
         let nativeSize = (width: Int(bounds.size.width * scale),
                           height: Int(bounds.size.height * scale))
         
-        let texture: Texture
+        let texture: SDLTexture
         
         // reuse cached texture if view hasn't been resized.
         if let cachedTexture = self.texture,
-            cachedTexture.width == nativeSize.width,
-            cachedTexture.height == nativeSize.height {
+            let attributes = try? cachedTexture.attributes(),
+            attributes.width == nativeSize.width,
+            attributes.height == nativeSize.height {
             
             texture = cachedTexture
             
         } else {
             
-            texture = Texture(renderer: screen.renderer,
-                              format: PixelFormat.RawValue(SDL_PIXELFORMAT_ARGB8888),
-                              access: .streaming,
-                              width: nativeSize.width,
-                              height: nativeSize.height).sdlAssert()
+            texture = try SDLTexture(renderer: screen.renderer,
+                                     format: .argb8888, // SDL_PIXELFORMAT_ARGB8888
+                                     access: .streaming,
+                                     width: nativeSize.width,
+                                     height: nativeSize.height)
             
-            texture.blendMode = .alpha
+            try texture.setBlendMode([.alpha])
             
             // cache for reuse if view size isn't changed
             self.texture = texture
         }
         
         // unlock and modify texture
-        texture.withUnsafeMutableBytes {
+        try texture.withUnsafeMutableBytes {
             
-            let surface = try! Cairo.Surface.Image(mutableBytes: $0.assumingMemoryBound(to: UInt8.self),
+            let surface = try Cairo.Surface.Image(mutableBytes: $0.assumingMemoryBound(to: UInt8.self),
                                                    format: .argb32,
                                                    width: nativeSize.width,
                                                    height: nativeSize.height,
@@ -699,7 +765,7 @@ open class UIView: UIResponder {
             surface.finish()
         }
         
-        screen.renderer.copy(texture, destination: rect)
+        try screen.renderer.copy(texture, destination: rect)
     }
     
     internal func draw(in context: Silica.CGContext) {
@@ -889,6 +955,7 @@ open class UIView: UIResponder {
     
     /// Asks the view if the gesture recognizer should be allowed to continue tracking touch events.
     open func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        
         return true
     }
     
@@ -899,6 +966,22 @@ open class UIView: UIResponder {
     open override var next: UIResponder? {
         
         return viewController ?? superview
+    }
+    
+    open override func becomeFirstResponder() -> Bool {
+        
+        // CHECKME
+        return super.becomeFirstResponder()
+    }
+    
+    open override var canBecomeFirstResponder: Bool {
+        
+        return true
+    }
+    
+    internal override var firstResponder: UIResponder? {
+        
+        return responderWindow?.firstResponder
     }
     
     // MARK: - Animating Views with Block Objects
@@ -1000,9 +1083,9 @@ final class ReferenceWritableKeyPath<Value, Property> {
                 let nativeSize = (width: Int(bounds.size.width * scale),
                                   height: Int(bounds.size.height * scale))
                 
-                let surface = cachedTexture.withUnsafeMutableBytes {
+                let surface = try! cachedTexture.withUnsafeMutableBytes {
                     
-                    try! Cairo.Surface.Image(mutableBytes: $0.assumingMemoryBound(to: UInt8.self), format: .argb32, width: nativeSize.width, height: nativeSize.height, stride: $1)
+                    try Cairo.Surface.Image(mutableBytes: $0.assumingMemoryBound(to: UInt8.self), format: .argb32, width: nativeSize.width, height: nativeSize.height, stride: $1)
                 }
                 
                 let data = try! surface!.writePNG()

@@ -56,6 +56,9 @@ open class UIWindow: UIView {
     /// Called automatically to inform the window that it is no longer the key window.
     open func resignKey() { /* subclass implementation */ }
     
+    /// last touch event, used for scrolling
+    private var lastTouchEvent: UITouchesEvent?
+    
     /// Dispatches the specified event to its views.
     public final func sendEvent(_ event: UIEvent) {
         
@@ -70,8 +73,9 @@ open class UIWindow: UIView {
             // send touches directly to views (legacy API)
             sendTouches(for: touchesEvent)
             
+            // cache event
+            lastTouchEvent = touchesEvent
         }
-        
         // handle presses
         else if let pressesEvent = event as? UIPressesEvent {
             
@@ -80,6 +84,37 @@ open class UIWindow: UIView {
             gestureEnvironment.updateGestures(for: event, window: self)
             
             sendButtons(for: pressesEvent)
+            
+        } else if let moveEvent = event as? UIMoveEvent {
+            // TODO: Implement self.focusResponder
+            /*
+            if let focusResponder = self.focusResponder {
+                
+                moveEvent.sendEvent(to: focusResponder)
+            }*/
+            
+        } else if let wheelEvent = event as? UIWheelEvent {
+            
+            guard isUserInteractionEnabled else { return }
+            
+            guard let touchEvent = lastTouchEvent,
+                let touch = touchEvent.touches.first,
+                touch.phase == .moved,
+                let view = touch.view
+                else { return }
+            
+            wheelEvent.sendEvent(to: view)
+        
+        } else if let responderEvent = event as? UIResponderEvent {
+            
+            if let responder = self.firstResponder {
+                
+                responderEvent.sendEvent(to: responder)
+            }
+            
+        } else {
+            
+            fatalError("Event not handled \(event)")
         }
     }
     
@@ -92,9 +127,38 @@ open class UIWindow: UIView {
     
     // MARK: - UIResponder
     
-    open override var next: UIResponder? {
+    internal var _firstResponder: UIResponder?
+    
+    internal override var firstResponder: UIResponder? {
+        
+        return _firstResponder
+    }
+    
+    /*
+    internal override var firstResponder: UIResponder? {
+        
+        if let fieldEditor = _firstResponder as? UIFieldEditor {
+            
+            return fieldEditor.proxiedView
+            
+        } else {
+            
+            return _firstResponder
+        }
+    }*/
+    
+    public final override var next: UIResponder? {
         
         return UIApplication.shared
+    }
+    
+    public final override func becomeFirstResponder() -> Bool {
+        
+        guard let rootViewController = self.rootViewController,
+            rootViewController.becomeFirstResponder()
+            else { return super.becomeFirstResponder() }
+        
+        return true
     }
     
     // MARK: - Private Methods
@@ -129,7 +193,17 @@ open class UIWindow: UIView {
     
     private func sendButtons(for event: UIPressesEvent) {
         
+        let responders = event.responders(for: self)
         
+        for responder in responders {
+            
+            
+        }
+    }
+    
+    internal override var responderWindow: UIWindow? {
+        
+        return self
     }
 }
 

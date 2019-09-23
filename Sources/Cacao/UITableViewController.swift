@@ -6,7 +6,13 @@
 //
 
 import Foundation
+
+#if os(iOS)
+import UIKit
+import CoreGraphics
+#else
 import Silica
+#endif
 
 /// A controller object that manages a table view.
 open class UITableViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
@@ -27,6 +33,12 @@ open class UITableViewController: UIViewController, UITableViewDataSource, UITab
         self.style = style
         super.init(nibName: nil, bundle: nil)
     }
+    
+    #if os(iOS)
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    #endif
     
     // MARK: - Getting the Table View
     
@@ -86,8 +98,8 @@ open class UITableViewController: UIViewController, UITableViewDataSource, UITab
         assert(self.tableView != nil, "Table View not loaded")
     }
     
-    open override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(animated: animated)
+    open override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
         /// Reload on first appearance
         if self.didReload == false {
@@ -104,8 +116,8 @@ open class UITableViewController: UIViewController, UITableViewDataSource, UITab
         }
     }
     
-    open override func viewDidAppear(animated: Bool) {
-        super.viewDidAppear(animated: animated)
+    open override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         
         // flash scroll indicators
         self.tableView.flashScrollIndicators()
