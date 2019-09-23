@@ -10,7 +10,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/Anard/Silica.git",
-            .branch("master")
+            .branch("develop")
         ),
         .package(
             url: "https://github.com/PureSwift/Cairo.git",
