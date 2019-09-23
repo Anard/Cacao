@@ -57,7 +57,7 @@
       },
       {
         "package": "Silica",
-        "repositoryURL": "https://github.com/PureSwift/Silica.git",
+        "repositoryURL": "https://github.com/Anard/Silica.git",
         "state": {
           "branch": "master",
           "revision": "7aeb8673927d2b69a0bab1679fcb8147426651cb",
