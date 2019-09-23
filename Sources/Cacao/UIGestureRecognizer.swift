@@ -254,7 +254,7 @@ open class UIGestureRecognizer: NSObject {
 
 public extension UIGestureRecognizer {
     
-    public struct TargetAction {
+    struct TargetAction {
         
         public typealias Action = (UIGestureRecognizer) -> ()
         
